@@ -1,26 +1,14 @@
 using System;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Internal;
-using Microsoft.Extensions.DependencyInjection;
 using Raven.Abstractions.Logging;
 using Raven.Server.Config;
 using Raven.Server.ServerWide;
-using System;
-using System.IO;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Server.Kestrel;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Raven.Server
 {
-    public class RavenServer : IDisposable
+    public class 
+        RavenServer : IDisposable
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(RavenServer));
 

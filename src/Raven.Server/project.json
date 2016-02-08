@@ -26,13 +26,13 @@
   "frameworks": {
     "dnxcore50": {
       "dependencies": {
-        "Microsoft.CSharp": "4.0.1-rc2-23728",
-        "System.Collections": "4.0.11-rc2-23728",
-        "System.Console": "4.0.0-rc2-23728",
-        "System.Linq": "4.0.1-rc2-23728",
-        "System.Threading": "4.0.11-rc2-23728",
-        "Microsoft.AspNetCore.Hosting": "1.0.0-rc2-16276",
-        "Microsoft.AspNetCore.Server.Kestrel": "1.0.0-rc2-16373",
+        "Microsoft.CSharp": "4.0.1-rc3-23808",
+        "System.Collections": "4.0.11-rc3-23808",
+        "System.Console": "4.0.0-rc3-23808",
+        "System.Linq": "4.0.1-rc3-23808",
+        "System.Threading": "4.0.11-rc3-23808",
+        "Microsoft.AspNet.Hosting": "1.0.0-rc2-16253",
+        "Microsoft.AspNetCore.Server.Kestrel": "1.0.0-rc2-16345",
         "Microsoft.Extensions.Configuration.FileProviderExtensions": "1.0.0-rc2-16035",
         "Microsoft.Extensions.Configuration.Json": "1.0.0-rc2-16035",
         "Microsoft.AspNetCore.WebSockets.Server": "0.1.0-rc2-16214"

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Security.Principal;
 
 namespace Raven.Abstractions.Data
 {
@@ -10,7 +9,6 @@ namespace Raven.Abstractions.Data
         public bool IsAdminGlobal { get; set; }
         public bool IsAdminCurrentDb { get; set; }
         public List<DatabaseInfo> Databases { get; set; }
-        public IPrincipal Principal { get; set; }
         public HashSet<string> AdminDatabases { get; set; }
         public HashSet<string> ReadOnlyDatabases { get; set; }
         public HashSet<string> ReadWriteDatabases { get; set; }

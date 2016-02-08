@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Specialized;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -41,7 +42,7 @@ namespace Raven.Abstractions.OAuth
             }
         }
 
-        protected static void SetHeader(WebHeaderCollection headers, string key, string value)
+        protected static void SetHeader(NameValueCollection headers, string key, string value)
         {
             try
             {
