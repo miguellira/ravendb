@@ -1,12 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.AspNet.WebSockets.Protocol;
 using Raven.Abstractions.Extensions;
 using Raven.Server.Json;
 using Raven.Server.Routing;
-using Microsoft.AspNet.Http;
-using Microsoft.AspNetCore.Http;
 using Raven.Server.Json.Parsing;
 using Constants = Raven.Abstractions.Data.Constants;
 
@@ -58,7 +55,8 @@ namespace Raven.Server.Documents
 
                     // optional
                     cmd.TryGet("ETag", out parsedCommands[i].Etag);
-                    cmd.TryGet("AdditionalData", out parsedCommands[i].AdditionalData);
+                    cmd.TryGet("AdditionalData", out parsedCommands[i].
+                        AdditionalData);
 
                     // We have to do additional processing on the documents
                     // in particular, prepare them for disk by compressing strings, validating floats, etc
