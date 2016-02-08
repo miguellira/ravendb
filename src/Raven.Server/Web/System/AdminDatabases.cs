@@ -6,9 +6,10 @@
 
 using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Raven.Abstractions.Data;
 using Raven.Server.Json;
+using Microsoft.AspNet.Http;
+
 using Raven.Server.Routing;
 
 namespace Raven.Server.Web.System

@@ -47,7 +47,7 @@ namespace Raven.Abstractions.OAuth
             while (true)
             {
                 tries++;
-                var handler = new WinHttpHandler();
+                var handler = new HttpClientHandler();
 
                 using (var httpClient = new HttpClient(handler))
                 {

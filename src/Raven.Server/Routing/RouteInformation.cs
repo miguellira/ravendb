@@ -3,7 +3,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Raven.Server.Documents;
 using Raven.Server.Exceptions;
 using Raven.Server.Web;

@@ -4,14 +4,9 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Raven.Client.Document;
-using Raven.Server.Documents;
-using Raven.Server.Json;
+using Microsoft.AspNet.Http;
 using Raven.Server.ServerWide;
 using Raven.Server.Web;
 
@@ -43,7 +38,7 @@ namespace Raven.Server.Routing
             }
 
             if(_serverStore == null)// okay that this is not thread safe, end up with same value
-                _serverStore = context.RequestServices.GetRequiredService<ServerStore>();
+                _serverStore = (ServerStore)context.RequestServices.GetService(typeof(ServerStore));
 
             var reqCtx = new RequestHandlerContext
             {

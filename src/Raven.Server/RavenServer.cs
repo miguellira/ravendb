@@ -1,6 +1,6 @@
 using System;
 using System.Diagnostics;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNet.Hosting;
 using Raven.Abstractions.Logging;
 using Raven.Server.Config;
 using Raven.Server.ServerWide;

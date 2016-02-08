@@ -1,5 +1,4 @@
-using Microsoft.AspNetCore.Http;
-using Raven.Client.Document;
+using Microsoft.AspNet.Http;
 using Raven.Server.Documents;
 using Raven.Server.Routing;
 using Raven.Server.ServerWide;
