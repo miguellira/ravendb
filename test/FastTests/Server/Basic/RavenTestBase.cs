@@ -34,7 +34,7 @@ namespace Raven.Tests.Core
             var configuration = new RavenConfiguration();
             configuration.Initialize();
 
-            configuration.Core.ServerUrls = new[] { "http://localhost:8080" };
+            configuration.Core.ServerUrl = "http://localhost:8080";
             configuration.Server.Name = ServerName;
             configuration.Core.RunInMemory = true;
             configuration.Core.DataDirectory = Path.Combine(configuration.Core.DataDirectory, "Tests");
@@ -73,7 +73,7 @@ namespace Raven.Tests.Core
             
             var store = new DocumentStore
             {
-                Url = UseFiddler(Server.Value.Configuration.Core.ServerUrls.First()),
+                Url = UseFiddler(Server.Value.Configuration.Core.ServerUrl),
                 DefaultDatabase = databaseName,
             };
             store.Initialize();

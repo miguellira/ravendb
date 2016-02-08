@@ -5,6 +5,8 @@ using Microsoft.AspNet.WebSockets.Protocol;
 using Raven.Abstractions.Extensions;
 using Raven.Server.Json;
 using Raven.Server.Routing;
+using Microsoft.AspNet.Http;
+using Microsoft.AspNetCore.Http;
 using Raven.Server.Json.Parsing;
 using Constants = Raven.Abstractions.Data.Constants;
 
