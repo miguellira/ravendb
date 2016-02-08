@@ -1,7 +1,7 @@
 {
   "version": "4.0.0-*",
   "commands": {
-    "test": "xunit.runner.dnx"
+    "test": "xunit.runner.aspnet"
   },
   "compilationOptions": {
     "allowUnsafe": true,
@@ -14,9 +14,9 @@
   "frameworks": {
     "dnxcore50": {
       "dependencies": {
-        "xunit": "2.2.0-beta1-build3239",
-        "xunit.runner.dnx": "2.1.0-rc1-build204",
         "xunit.runner.aspnet": "2.0.0-aspnet-rc2-16105",
+        "xunit": "2.2.0-beta1-build3239",
+
 
         "System.Linq": "4.0.1-rc3-23808",
 
@@ -58,6 +58,6 @@
   },
   "dependencies": {
     "Sparrow": "4.0.0-*",
-    "Voron": "4.0.0-*",
+    "Voron": "4.0.0-*"
   }
 }
