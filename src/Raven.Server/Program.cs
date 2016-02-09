@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Raven.Abstractions.Logging;
 using Raven.Server.Config;
@@ -40,6 +41,18 @@ namespace Raven.Server
                     }
                     Log.Info("Server is shutting down");
                     return 0;
+                }
+                catch (ReflectionTypeLoadException ftle)
+                {
+                    Log.FatalException("Failed to initialize the server because of missing types", ftle);
+                    Console.WriteLine("Failed to load types!");
+                    for (int i = 0; i < ftle.Types.Length; i++)
+                    {
+                        Console.WriteLine(ftle.Types[i].FullName + " because " + ftle.LoaderExceptions[i]);
+
+                        Log.FatalException("Could not load " + ftle.Types[i].FullName, ftle.LoaderExceptions[i]);
+                    }
+                    return -2;
                 }
                 catch (Exception e)
                 {
