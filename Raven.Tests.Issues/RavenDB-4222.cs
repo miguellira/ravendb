@@ -32,7 +32,7 @@ namespace Raven.Tests.Issues
                         101
                     };
 
-                    var task = accessor.Tasks.GetMergedTask<RemoveFromIndexTask>(idsToSkip, new[] {101}, new HashSet<IComparable>());
+                    var task = accessor.Tasks.GetMergedTask<RemoveFromIndexTask>(idsToSkip, new[] {101}, new HashSet<IComparable>(), new HashSet<int>());
                     Assert.Null(task);
                 });
 
@@ -62,17 +62,17 @@ namespace Raven.Tests.Issues
                     };
                     var allIndexes = new[] {101, 102, 103};
                     var alreadySeen = new HashSet<IComparable>();
-                    var task = accessor.Tasks.GetMergedTask<RemoveFromIndexTask>(idsToSkip, allIndexes, alreadySeen);
+                    var task = accessor.Tasks.GetMergedTask<RemoveFromIndexTask>(idsToSkip, allIndexes, alreadySeen, new HashSet<int>());
                     Assert.NotNull(task);
                     Assert.Equal(101, task.Index);
                     accessor.Tasks.DeleteTasks(alreadySeen);
 
-                    task = accessor.Tasks.GetMergedTask<RemoveFromIndexTask>(idsToSkip, allIndexes, alreadySeen);
+                    task = accessor.Tasks.GetMergedTask<RemoveFromIndexTask>(idsToSkip, allIndexes, alreadySeen, new HashSet<int>());
                     Assert.NotNull(task);
                     Assert.Equal(103, task.Index);
                     accessor.Tasks.DeleteTasks(alreadySeen);
 
-                    task = accessor.Tasks.GetMergedTask<RemoveFromIndexTask>(idsToSkip, allIndexes, alreadySeen);
+                    task = accessor.Tasks.GetMergedTask<RemoveFromIndexTask>(idsToSkip, allIndexes, alreadySeen, new HashSet<int>());
                     Assert.Null(task);
                 });
 

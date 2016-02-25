@@ -78,7 +78,7 @@ namespace Raven.Database.Storage.Voron.StorageActions
             }
         }
 
-        public T GetMergedTask<T>(List<int> indexesToSkip, int[] allIndexes, HashSet<IComparable> alreadySeen) 
+        public T GetMergedTask<T>(List<int> indexesToSkip, int[] allIndexes, HashSet<IComparable> alreadySeen, HashSet<int> indexes) 
             where T : DatabaseTask
         {
             var type = CreateKey(typeof(T).FullName);

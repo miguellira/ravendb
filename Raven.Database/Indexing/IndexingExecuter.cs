@@ -146,11 +146,22 @@ namespace Raven.Database.Indexing
             var alreadySeen = new HashSet<IComparable>();
             transactionalStorage.Batch(actions =>
             {
+                var indexes = new HashSet<int>(context.IndexStorage.Indexes);
                 while (context.RunIndexing && sp.Elapsed.TotalMinutes < 1)
                 {
-                    var processedKeys = ExecuteTask(indexIds, alreadySeen);
+                    var processedKeys = ExecuteTask(indexIds, alreadySeen, indexes);
                     if (processedKeys == 0)
-                        break;
+                    {
+                        if (alreadySeen.Count == 0)
+                            break;
+                        // we run throughout tasks for all the indexes
+                        context.IndexStorage.FlushIndexes(indexIds, onlyAddIndexError: true);
+                        actions.Tasks.DeleteTasks(alreadySeen);
+                        indexIds.Clear();
+                        alreadySeen.Clear();
+                        actions.General.PulseTransaction();
+                        continue;
+                    }
 
                     totalProcessedKeys += processedKeys;
                     actions.General.MaybePulseTransaction(
@@ -183,13 +194,13 @@ namespace Raven.Database.Indexing
             return count != 0;
         }
 
-        private int ExecuteTask(HashSet<int> indexIds, HashSet<IComparable> alreadySeen)
+        private int ExecuteTask(HashSet<int> indexIds, HashSet<IComparable> alreadySeen, HashSet<int> indexes)
         {
             var processedKeys = 0;
 
             transactionalStorage.Batch(actions =>
             {
-                var task = GetApplicableTask(actions, alreadySeen);
+                var task = GetApplicableTask(actions, alreadySeen, indexes);
                 if (task == null)
                 {
                     if (Log.IsDebugEnabled)
@@ -272,17 +283,17 @@ namespace Raven.Database.Indexing
             return processedKeys;
         }
 
-        private DatabaseTask GetApplicableTask(IStorageActionsAccessor actions, HashSet<IComparable> alreadySeen)
+        private DatabaseTask GetApplicableTask(IStorageActionsAccessor actions, HashSet<IComparable> alreadySeen, HashSet<int> indexes)
         {
             var disabledIndexIds = context.IndexStorage.GetDisabledIndexIds();
 
             var removeFromIndexTasks = actions.Tasks.GetMergedTask<RemoveFromIndexTask>(
-                disabledIndexIds, context.IndexStorage.Indexes, alreadySeen);
+                disabledIndexIds, context.IndexStorage.Indexes, alreadySeen, indexes);
             if (removeFromIndexTasks != null)
                 return removeFromIndexTasks;
 
             return actions.Tasks.GetMergedTask<TouchReferenceDocumentIfChangedTask>(
-                disabledIndexIds, context.IndexStorage.Indexes, alreadySeen);
+                disabledIndexIds, context.IndexStorage.Indexes, alreadySeen, indexes);
         }
 
         private string GetIndexName(int indexId)

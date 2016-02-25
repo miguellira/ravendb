@@ -58,16 +58,35 @@ namespace Raven.Database.Storage.Esent.StorageActions
             }
         }
 
-        public T GetMergedTask<T>(List<int> indexesToSkip, int[] allIndexes, HashSet<IComparable> alreadySeen)
+        public T GetMergedTask<T>(List<int> indexesToSkip, int[] allIndexes, HashSet<IComparable> alreadySeen, HashSet<int> indexes)
             where T : DatabaseTask
         {
-            Api.MoveBeforeFirst(session, Tasks);
-
-            while (Api.TryMoveNext(session, Tasks))
+            Api.JetSetCurrentIndex(Session, Tasks, "by_index_and_task_type");
+            foreach (var currentIndex in allIndexes.ToList())
             {
+                Api.MakeKey(Session, Tasks, currentIndex, MakeKeyGrbit.NewKey);
+                Api.MakeKey(Session, Tasks, typeof(T).FullName, Encoding.Unicode, MakeKeyGrbit.None);
+
+                if (Api.TrySeek(Session, Tasks, SeekGrbit.SeekEQ) == false)
+                {
+                    indexes.Remove(currentIndex);
+                    continue;
+                }
+
+
+                var forIndex = Api.RetrieveColumnAsInt32(session, Tasks, tableColumnsCache.TasksColumns["for_index"]).Value;
+                if (forIndex != currentIndex)
+                {
+                    indexes.Remove(currentIndex);
+                    continue;
+                }
+
                 var taskType = Api.RetrieveColumnAsString(session, Tasks, tableColumnsCache.TasksColumns["task_type"], Encoding.Unicode);
                 if (taskType != typeof(T).FullName)
+                {
+                    indexes.Remove(currentIndex);
                     continue;
+                }
 
                 var currentId = Api.RetrieveColumnAsInt32(session, Tasks, tableColumnsCache.TasksColumns["id"]).Value;
                 var taskAsBytes = Api.RetrieveColumn(session, Tasks, tableColumnsCache.TasksColumns["task"]);
@@ -83,6 +102,7 @@ namespace Raven.Database.Storage.Esent.StorageActions
                         e);
 
                     alreadySeen.Add(currentId);
+                    indexes.Remove(currentIndex);
                     continue;
                 }
 
@@ -90,20 +110,15 @@ namespace Raven.Database.Storage.Esent.StorageActions
                 {
                     if (logger.IsDebugEnabled)
                         logger.Debug("Skipping task id: {0} for index id: {1}", currentId, task.Index);
+                    indexes.Remove(currentIndex);
                     continue;
                 }
 
                 if (alreadySeen.Add(currentId) == false)
-                    continue;
-
-                if (allIndexes.Contains(task.Index) == false)
                 {
-                    if (logger.IsDebugEnabled)
-                        logger.Debug("Skipping task id: {0} for non existing index id: {0}", currentId, task.Index);
-
+                    indexes.Remove(currentIndex);
                     continue;
                 }
-
                 if (logger.IsDebugEnabled)
                     logger.Debug("Fetched task id: {0}", currentId);
 
