@@ -78,6 +78,54 @@ namespace Raven.Database.Storage.Voron.StorageActions
             }
         }
 
+        public T GetMergedTask<T>(HashSet<IComparable> alreadySeen) where T : DatabaseTask
+        {
+            var type = CreateKey(typeof(T).FullName);
+            var tasksByType = tableStorage.Tasks.GetIndex(Tables.Tasks.Indices.ByType);
+
+            using (var iterator = tasksByType.MultiRead(Snapshot, (Slice)type))
+            {
+                if (!iterator.Seek(Slice.BeforeAllKeys))
+                    return null;
+
+                do
+                {
+                    ushort version;
+                    var value = LoadStruct(tableStorage.Tasks, iterator.CurrentKey, writeBatch.Value, out version);
+                    if (value == null)
+                        continue;
+
+                    var currentId = Etag.Parse(value.ReadBytes(TaskFields.TaskId));
+                    DatabaseTask task;
+                    try
+                    {
+                        task = DatabaseTask.ToTask(value.ReadString(TaskFields.Type), value.ReadBytes(TaskFields.SerializedTask));
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.ErrorException(
+                            string.Format("Could not create instance of a task: {0}", value), e);
+
+                        alreadySeen.Add(currentId);
+                        continue;
+                    }
+
+                    if (alreadySeen.Add(currentId) == false)
+                        continue;
+
+                    if (Logger.IsDebugEnabled)
+                        Logger.Debug("Fetched task id: {0}", currentId);
+
+                    task.Id = currentId;
+                    MergeSimilarTasks(task, alreadySeen);
+
+                    return (T)task;
+                } while (iterator.MoveNext());
+            }
+
+            return null;
+        }
+
         public T GetMergedTask<T>(List<int> indexesToSkip, int[] allIndexes, HashSet<IComparable> alreadySeen, HashSet<int> indexes) 
             where T : DatabaseTask
         {

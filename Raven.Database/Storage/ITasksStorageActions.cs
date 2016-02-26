@@ -19,6 +19,9 @@ namespace Raven.Database.Storage
         T GetMergedTask<T>(List<int> indexesToSkip, int[] allIndexes, HashSet<IComparable> alreadySeen, HashSet<int> indexes)
             where T : DatabaseTask;
 
+        T GetMergedTask<T>(HashSet<IComparable> alreadySeen)
+          where T : DatabaseTask;
+
         IEnumerable<TaskMetadata> GetPendingTasksForDebug();
 
         void DeleteTasks(HashSet<IComparable> alreadySeen);

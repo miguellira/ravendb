@@ -297,8 +297,7 @@ namespace Raven.Database.Indexing
             if (removeFromIndexTasks != null)
                 return removeFromIndexTasks;
 
-            return actions.Tasks.GetMergedTask<TouchReferenceDocumentIfChangedTask>(
-                disabledIndexIds, context.IndexStorage.Indexes, alreadySeen, indexes);
+            return actions.Tasks.GetMergedTask<TouchReferenceDocumentIfChangedTask>(alreadySeen);
         }
 
         private string GetIndexName(int indexId)

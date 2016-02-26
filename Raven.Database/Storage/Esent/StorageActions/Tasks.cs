@@ -10,6 +10,7 @@ using System.Text;
 using Microsoft.Isam.Esent.Interop;
 using Raven.Abstractions.Exceptions;
 using Raven.Abstractions.Logging;
+using Raven.Database.Storage.Voron.Impl;
 using Raven.Database.Tasks;
 
 namespace Raven.Database.Storage.Esent.StorageActions
@@ -56,6 +57,51 @@ namespace Raven.Database.Storage.Esent.StorageActions
                 var result = last - first;
                 return result + 1;
             }
+        }
+
+        public T GetMergedTask<T>(HashSet<IComparable> alreadySeen) where T : DatabaseTask
+        {
+            Api.JetSetCurrentIndex(Session, Tasks, "by_id");
+            Api.MoveBeforeFirst(Session, Tasks);
+            if (Api.TryMoveNext(Session, Tasks) == false)
+            {
+                return null;
+            }
+
+            var taskType = Api.RetrieveColumnAsString(session, Tasks, tableColumnsCache.TasksColumns["task_type"], Encoding.Unicode);
+            if (taskType != typeof (T).FullName)
+            {
+                return null;
+            }
+
+            var currentId = Api.RetrieveColumnAsInt32(session, Tasks, tableColumnsCache.TasksColumns["id"]).Value;
+            var taskAsBytes = Api.RetrieveColumn(session, Tasks, tableColumnsCache.TasksColumns["task"]);
+            DatabaseTask task;
+            try
+            {
+                task = DatabaseTask.ToTask(taskType, taskAsBytes);
+            }
+            catch (Exception e)
+            {
+                logger.ErrorException(
+                    string.Format("Could not create instance of a task: {0}", taskAsBytes),
+                    e);
+
+                alreadySeen.Add(currentId);
+                return null;
+            }
+
+            if (alreadySeen.Add(currentId) == false)
+            {
+                return null;
+            }
+            if (logger.IsDebugEnabled)
+                logger.Debug("Fetched task id: {0}", currentId);
+
+            task.Id = currentId;
+            MergeSimilarTasks(task, alreadySeen, null, null);
+
+            return (T) task;
         }
 
         public T GetMergedTask<T>(List<int> indexesToSkip, int[] allIndexes, HashSet<IComparable> alreadySeen, HashSet<int> indexes)
@@ -184,7 +230,7 @@ namespace Raven.Database.Storage.Esent.StorageActions
 
                 // esent index ranges are approximate, and we need to check them ourselves as well
                 if (Api.RetrieveColumnAsString(session, Tasks, tableColumnsCache.TasksColumns["task_type"]) != expectedTaskType)
-                    continue;
+                    break;
 
                 var taskAsBytes = Api.RetrieveColumn(session, Tasks, tableColumnsCache.TasksColumns["task"]);
                 var taskType = Api.RetrieveColumnAsString(session, Tasks, tableColumnsCache.TasksColumns["task_type"], Encoding.Unicode);
@@ -205,17 +251,18 @@ namespace Raven.Database.Storage.Esent.StorageActions
                     continue;
                 }
 
-                if (indexesToSkip.Contains(existingTask.Index))
+                if (alreadySeen.Add(currentId) == false)
+                    continue;
+
+                if (indexesToSkip != null && 
+                    indexesToSkip.Contains(existingTask.Index))
                 {
                     if (logger.IsDebugEnabled)
                         logger.Debug("Skipping task id: {0} for index id: {1}", currentId, existingTask.Index);
                     continue;
                 }
 
-                if (alreadySeen.Add(currentId) == false)
-                    continue;
-
-                if (allIndexes.Contains(existingTask.Index) == false)
+                if (allIndexes != null && allIndexes.Contains(existingTask.Index) == false)
                 {
                     if (logger.IsDebugEnabled)
                         logger.Debug("Skipping task id: {0} for non existing index id: {0}", currentId, existingTask.Index);
