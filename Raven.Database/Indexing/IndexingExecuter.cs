@@ -146,10 +146,11 @@ namespace Raven.Database.Indexing
             var alreadySeen = new HashSet<IComparable>();
             transactionalStorage.Batch(actions =>
             {
+                var foundRemoveFromIndex = new Reference<bool> { Value = false };
                 var indexes = new HashSet<int>(context.IndexStorage.Indexes);
-                while (context.RunIndexing && sp.Elapsed.TotalMinutes < 1)
+                while (context.RunIndexing && sp.Elapsed.TotalMinutes < 5)
                 {
-                    var processedKeys = ExecuteTask(indexIds, alreadySeen, indexes);
+                    var processedKeys = ExecuteTask(indexIds, alreadySeen, indexes, foundRemoveFromIndex);
                     if (processedKeys == 0)
                     {
                         if (alreadySeen.Count == 0)
@@ -160,6 +161,7 @@ namespace Raven.Database.Indexing
                         }
                         // we run throughout tasks for all the indexes
                         totalTasks += alreadySeen.Count;
+                        foundRemoveFromIndex.Value = false;
                         context.IndexStorage.FlushIndexes(indexIds, onlyAddIndexError: true);
                         actions.Tasks.DeleteTasks(alreadySeen);
                         indexIds.Clear();
@@ -182,6 +184,7 @@ namespace Raven.Database.Indexing
                             actions.Tasks.DeleteTasks(alreadySeen);
                             indexIds.Clear();
                             alreadySeen.Clear();
+                            foundRemoveFromIndex.Value = false;
                         });
 
                     count++;
@@ -201,16 +204,15 @@ namespace Raven.Database.Indexing
             return count != 0;
         }
 
-        private int ExecuteTask(HashSet<int> indexIds, HashSet<IComparable> alreadySeen, HashSet<int> indexes)
+        private int ExecuteTask(HashSet<int> indexIds, HashSet<IComparable> alreadySeen, HashSet<int> indexes, Reference<bool> foundRemoveFromIndex)
         {
             var processedKeys = 0;
 
             transactionalStorage.Batch(actions =>
             {
-                var task = GetApplicableTask(actions, alreadySeen, indexes);
+                var task = GetApplicableTask(actions, alreadySeen, indexes, foundRemoveFromIndex);
                 if (task == null)
                 {
-                
                     return;
                 }
 
@@ -288,15 +290,17 @@ namespace Raven.Database.Indexing
             return processedKeys;
         }
 
-        private DatabaseTask GetApplicableTask(IStorageActionsAccessor actions, HashSet<IComparable> alreadySeen, HashSet<int> indexes)
+        private DatabaseTask GetApplicableTask(IStorageActionsAccessor actions, HashSet<IComparable> alreadySeen, HashSet<int> indexes, Reference<bool> foundRemoveFromIndex)
         {
             var disabledIndexIds = context.IndexStorage.GetDisabledIndexIds();
 
             var removeFromIndexTasks = actions.Tasks.GetMergedTask<RemoveFromIndexTask>(
                 disabledIndexIds, context.IndexStorage.Indexes, alreadySeen, indexes);
-            if (removeFromIndexTasks != null)
+            if (removeFromIndexTasks != null || foundRemoveFromIndex.Value)
+            {
+                foundRemoveFromIndex.Value = true;
                 return removeFromIndexTasks;
-
+            }
             return actions.Tasks.GetMergedTask<TouchReferenceDocumentIfChangedTask>(alreadySeen);
         }
 

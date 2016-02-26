@@ -47,6 +47,7 @@ namespace Raven.Database.Storage.Esent.StorageActions
         {
             get
             {
+                Api.JetSetCurrentIndex(Session, Tasks, "by_id");
                 if (Api.TryMoveFirst(session, Tasks) == false)
                     return 0;
                 var first = (int)Api.RetrieveColumnAsInt32(session, Tasks, tableColumnsCache.TasksColumns["id"]);
@@ -222,10 +223,9 @@ namespace Raven.Database.Storage.Esent.StorageActions
                     return;
             }
 
-            var totalKeysToProcess = task.NumberOfKeys;
             do
             {
-                if (totalKeysToProcess >= 5 * 1024)
+                if (task.NumberOfKeys >= 12 * 1024)
                     break;
 
                 // esent index ranges are approximate, and we need to check them ourselves as well
@@ -270,7 +270,6 @@ namespace Raven.Database.Storage.Esent.StorageActions
                     continue;
                 }
 
-                totalKeysToProcess += existingTask.NumberOfKeys;
                 task.Merge(existingTask);
                 if (logger.IsDebugEnabled)
                     logger.Debug("Merged task id: {0} with task id: {1}", currentId, task.Id);
