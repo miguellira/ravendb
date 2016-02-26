@@ -142,7 +142,7 @@ namespace Raven.Database.Indexing
             var count = 0;
             var indexIds = new HashSet<int>();
             var totalProcessedKeys = 0;
-            
+            int totalTasks = 0;
             var alreadySeen = new HashSet<IComparable>();
             transactionalStorage.Batch(actions =>
             {
@@ -153,13 +153,19 @@ namespace Raven.Database.Indexing
                     if (processedKeys == 0)
                     {
                         if (alreadySeen.Count == 0)
+                        {
+                            if (Log.IsDebugEnabled)
+                                Log.Debug("No tasks to execute were found!");
                             break;
+                        }
                         // we run throughout tasks for all the indexes
+                        totalTasks += alreadySeen.Count;
                         context.IndexStorage.FlushIndexes(indexIds, onlyAddIndexError: true);
                         actions.Tasks.DeleteTasks(alreadySeen);
                         indexIds.Clear();
                         alreadySeen.Clear();
                         actions.General.PulseTransaction();
+                        indexes = new HashSet<int>(context.IndexStorage.Indexes);
                         continue;
                     }
 
@@ -171,6 +177,7 @@ namespace Raven.Database.Indexing
                             // if we need to PulseTransaction, we are going to delete
                             // all the completed tasks, so we need to flush 
                             // all the changes made to the indexes to disk before that
+                            totalTasks += alreadySeen.Count;
                             context.IndexStorage.FlushIndexes(indexIds, onlyAddIndexError: true);
                             actions.Tasks.DeleteTasks(alreadySeen);
                             indexIds.Clear();
@@ -187,8 +194,8 @@ namespace Raven.Database.Indexing
           
             if (Log.IsDebugEnabled)
             {
-                Log.Debug("Executed {0} tasks, processed documents: {1:#,#;;0}, took {2:#,#;;0}ms",
-                    count, totalProcessedKeys, sp.ElapsedMilliseconds);
+                Log.Debug("Executed {0} ({3} tasks, processed documents: {1:#,#;;0}, took {2:#,#;;0}ms",
+                    count, totalProcessedKeys, sp.ElapsedMilliseconds, totalTasks);
             }
 
             return count != 0;
@@ -203,9 +210,7 @@ namespace Raven.Database.Indexing
                 var task = GetApplicableTask(actions, alreadySeen, indexes);
                 if (task == null)
                 {
-                    if (Log.IsDebugEnabled)
-                        Log.Debug("No tasks to execute were found!");
-
+                
                     return;
                 }
 
